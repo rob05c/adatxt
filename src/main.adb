@@ -6,6 +6,8 @@ with Ada.Text_IO.Unbounded_IO; use Ada.Text_IO.Unbounded_IO;
 with Consts;
 with Term;
 with Buf;
+with Files;
+with Window;
 
 procedure Main is
 
@@ -16,6 +18,10 @@ procedure Main is
 
    Txt   : Buf.Buffer;
    ECode : Integer;
+
+   Win_Buf : Buf.Buffer;
+   -- Win : Window.Window;
+
 
 begin
    -- Txt := Buf.Buffer;
@@ -62,7 +68,7 @@ begin
 
    Put_Line ("cursor pos " & Buf.Cursor_Pos (Txt)'Img);
    Put_Line ("buf len " & Buf.Buffer_Len (Txt)'Img);
-   Put_Line ("Buf.Print '" & Buf.Print(Txt, 0, 0, ECode) & "'");
+   Put_Line ("Buf.Print '" & Buf.Print (Txt, 0, 0, ECode) & "'");
 
    ECode := Buf.Del_At_Cursor (Txt, 5);
    if ECode /= 0 then
@@ -81,6 +87,82 @@ begin
    Put_Line ("Buf.Print '" & Input & "'");
    Put_Line (To_Unbounded_String ("Buf.A '") & Txt.A & "'");
    Put_Line (To_Unbounded_String ("Buf.B '") & Txt.B & "'");
+
+   -- tui
+
+   Put_Line ("Starting TUI");
+   Put (Consts.Ansi_Altbuf_Enable);
+   Put (Consts.Ansi_Screen_Erase);
+   Put (Consts.Ansi_Cursor_Hide);
+   Put_Line (Consts.Ansi_Move_Cursor (0, 0));
+
+   loop
+      Put_Line ("Change the window size, and press any key, q to quit...");
+      Input := Get_Line;
+
+      exit when Input = "q";
+
+      Errno := Term.My_Screen_Size (X, Y);
+      if Errno /= 0 then
+         Put_Line ("Error getting term size: errno " & Errno'Img);
+         return;
+      end if;
+      Put ("Term Size is: ");
+      Put (X, Width => 0);
+      Put ("x");
+      Put (Y, Width => 0);
+      Put_Line ("");
+   end loop;
+
+   Put (Consts.Ansi_Altbuf_Disable);
+   Put (Consts.Ansi_Cursor_Show);
+   Put_Line ("Restoring Term");
+
+   -- file loading
+
+   Put_Line ("Enter the file path to load:");
+   Input := Get_Line;
+
+   -- TODO fix to work with relative paths
+    Errno := Files.Fill_Buffer_From_File(Input, Win_Buf);
+    if Errno /= 0 then
+      Put_Line ("filling win buffer from file: errno " & Errno'Img);
+      return;
+    end if;
+
+   Input := Buf.Print (Win_Buf, 0, Buf.Buffer_Len(Win_Buf), Errno);
+    if Errno /= 0 then
+      Put_Line ("printing win buffer: errno " & Errno'Img);
+      return;
+    end if;
+
+   Put_Line ("Starting TUI");
+   Put (Consts.Ansi_Altbuf_Enable);
+   Put (Consts.Ansi_Screen_Erase);
+   Put (Consts.Ansi_Cursor_Hide);
+   Put_Line (Consts.Ansi_Move_Cursor (0, 0));
+
+   Errno := Term.My_Screen_Size (X, Y);
+   if Errno /= 0 then
+      Put_Line ("Error getting term size: errno " & Errno'Img);
+      return;
+   end if;
+
+
+   Put(Input);
+
+   Put (Consts.Ansi_Move_Cursor (30, 0));
+
+   Put ("Term Size is: ");
+   Put (X, Width => 0);
+   Put ("x");
+   Put (Y, Width => 0);
+   Put_Line ("");
+
+
+   Put("Press any key to quit");
+   Input := Get_Line;
+
 
    null;
 end Main;
