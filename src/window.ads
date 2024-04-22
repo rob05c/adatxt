@@ -14,17 +14,23 @@ with Buf;
 
 package Window is
 
-   type IntCoord is record
-      X : Integer;
-      Y : Integer;
-   end record;
+  type IntCoord is record
+    X : Integer;
+    Y : Integer;
+  end record;
 
-   type Window is record
-      -- position of the buffer in the viewable window
-      Window_Buffer_Pos : IntCoord;
-      -- position of the text cursor in the buffer (*not* in the window)
-      Cursor_Buffer_Pos : IntCoord;
-      Txt               : Buf.Buffer;
-   end record;
+  type Window is record
+    -- position of the buffer in the viewable window
+    Window_Buffer_Pos : IntCoord;
+    -- position of the text cursor in the buffer (*not* in the window)
+    Cursor_Buffer_Pos : IntCoord;
+    Txt               : Buf.Buffer;
+  end record;
+
+  procedure Draw_Box
+   (X_Start : Integer; Y_Start : Integer; X_End : Integer; Y_End : Integer);
+  procedure Draw_Text_In_Box
+   (Str   : Unbounded_String; X_Start : Integer; Y_Start : Integer;
+    X_End : Integer; Y_End : Integer);
 
 end Window;
